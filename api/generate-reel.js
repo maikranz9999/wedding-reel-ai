@@ -1,302 +1,1288 @@
-export default async function handler(req, res) {
-  // CORS Headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  // DEBUGGING: Environment Check
-  console.log('=== ENVIRONMENT DEBUG ===');
-  console.log('API Key exists:', !!process.env.CLAUDE_API_KEY);
-  console.log('API Key length:', process.env.CLAUDE_API_KEY?.length || 0);
-  console.log('Model:', process.env.CLAUDE_MODEL);
-  console.log('Request method:', req.method);
-  console.log('Request body:', JSON.stringify(req.body, null, 2));
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      error: 'Method not allowed',
-      method: req.method,
-      success: false 
-    });
-  }
-
-  // API Key Validation
-  if (!process.env.CLAUDE_API_KEY) {
-    console.error('❌ CLAUDE_API_KEY is missing!');
-    return res.status(500).json({
-      error: 'Server-Konfigurationsfehler: API-Schlüssel fehlt',
-      success: false,
-      debug: 'CLAUDE_API_KEY environment variable not set'
-    });
-  }
-
-  if (!process.env.CLAUDE_API_KEY.startsWith('sk-ant-')) {
-    console.error('❌ Invalid API Key format!');
-    return res.status(500).json({
-      error: 'Server-Konfigurationsfehler: Ungültiger API-Schlüssel',
-      success: false,
-      debug: 'API Key does not start with sk-ant-'
-    });
-  }
-
-  try {
-    // Destructure request body with defaults
-    const {
-      backgroundVideo = '',
-      service = '',
-      style = '',
-      optionalIdea = ''
-    } = req.body || {};
-
-    // Input validation
-    if (!backgroundVideo || !service || !style) {
-      console.log('❌ Validation failed:', { 
-        backgroundVideo: !!backgroundVideo, 
-        service: !!service, 
-        style: !!style 
-      });
-      return res.status(400).json({ 
-        error: 'Pflichtfelder fehlen: backgroundVideo, service und style sind erforderlich',
-        missing: {
-          backgroundVideo: !backgroundVideo,
-          service: !service,
-          style: !style
-        },
-        success: false
-      });
-    }
-
-    // Import Anthropic SDK
-    let Anthropic;
-    try {
-      const anthropicModule = await import('@anthropic-ai/sdk');
-      Anthropic = anthropicModule.default;
-      console.log('✅ Anthropic SDK imported successfully');
-    } catch (importError) {
-      console.error('❌ Failed to import Anthropic SDK:', importError);
-      return res.status(500).json({
-        error: 'Server-Fehler: SDK kann nicht geladen werden',
-        success: false,
-        debug: importError.message
-      });
-    }
-
-    // Initialize Anthropic client
-    const anthropic = new Anthropic({
-      apiKey: process.env.CLAUDE_API_KEY,
-    });
-
-    // Style-spezifische Richtlinien
-    const styleGuidelines = {
-      inspiration: {
-        name: "Emotional",
-        tone: "Romantisch, träumerisch, herzberührend. Verwende Wörter wie 'Magie', 'Träume', 'Ewigkeit', 'Herz'. Fokus auf Gefühle und besondere Momente.",
-        examples: "Der Moment..., Wenn Träume..., Eure Liebe..."
-      },
-      funny: {
-        name: "Humorvoll", 
-        tone: "Locker, charmant, augenzwinkernd. Verwende Worte wie 'Oops', 'Plot Twist', 'Real Talk'. Humor ohne Kitsch, sympathisch und bodenständig.",
-        examples: "Plot Twist:..., Real Talk..., Niemand sagt dir..."
-      },
-      realtalk: {
-        name: "Authentisch",
-        tone: "Ehrlich, vertrauensvoll, persönlich. Verwende 'Ehrlich gesagt', 'Die Wahrheit ist', 'Behind the Scenes'. Zeige Expertise und Erfahrung.",
-        examples: "Die Wahrheit über..., Ehrlich gesagt..., Was niemand sagt..."
-      }
-    };
-
-    const selectedStyleGuide = styleGuidelines[style] || styleGuidelines.inspiration;
-
-    // Hauptprompt für Claude
-    const prompt = `Du bist ein Experte für Instagram Reel Content speziell für Hochzeitsdienstleister. Erstelle 6 verschiedene Overlay-Text-Varianten für ein Instagram Reel.
-
-KONTEXT:
-Video-Inhalt: "${backgroundVideo}"
-Hochzeitsservice: "${service}"
-Gewünschter Stil: ${selectedStyleGuide.name}
-${optionalIdea ? `Zusätzliche Idee: "${optionalIdea}"` : ''}
-
-STIL-RICHTLINIEN FÜR "${selectedStyleGuide.name.toUpperCase()}":
-${selectedStyleGuide.tone}
-
-AUSGABE-FORMAT (JSON):
-Erstelle EXAKT 6 Varianten als JSON Array. Jede Variante soll haben:
-- "hook": Ein starker, kurzer Hook (1-3 Wörter, GROSS geschrieben)
-- "mainText": Haupttext (2-3 kurze Zeilen, max 60 Zeichen pro Zeile)
-- "cta": Call-to-Action (1 Zeile, zum Handeln auffordern)
-- "timing": Empfohlenes Timing (z.B. "0-2s: Hook, 2-6s: Main, 6-8s: CTA")
-- "emotion": Haupt-Emotion die angesprochen wird
-
-WICHTIGE REGELN:
-1. Jede Variante muss ANDERS sein (verschiedene Hooks, verschiedene Ansätze)
-2. Verwende Emojis sparsam und gezielt
-3. Texte müssen auf Handy-Screens gut lesbar sein
-4. Fokus auf BUCHUNGEN generieren, nicht nur Likes
-5. Berücksichtige, dass Brautpaare die Zielgruppe sind
-6. Hooks sollen neugierig machen und zum Weiterschauen animieren
-
-BEISPIEL STRUKTUR:
-[
-  {
-    "hook": "PLOT TWIST",
-    "mainText": "Der Fotograf war\\nnervöser als\\ndie Braut 😅",
-    "cta": "Wer kennt's? 👇",
-    "timing": "0-2s: Hook, 2-5s: Main, 5-7s: CTA",
-    "emotion": "Humor"
-  }
-]`;
-
-    console.log('Sending prompt to Claude...', {
-      promptLength: prompt.length,
-      style: selectedStyleGuide.name
-    });
-
-    // Claude API Call
-    const message = await anthropic.messages.create({
-      model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
-      temperature: 0.8,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reel Text AI - Hochzeitsdienstleister Instagram Generator</title>
+    <meta name="description" content="Erstelle emotionale Instagram Reel Overlay-Texte für Hochzeitsdienstleister. Kreativ, buchungsstark und herzberührend.">
+    <meta name="keywords" content="Hochzeitsdienstleister, Instagram Reels, Hochzeitsfotograf, Hochzeitsplaner, Social Media, KI Generator">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      ]
-    });
 
-    console.log('Claude response received:', {
-      contentLength: message.content[0]?.text?.length || 0,
-      contentPreview: message.content[0]?.text?.substring(0, 100) + '...'
-    });
-
-    const responseText = message.content[0].text;
-    
-    // Versuche JSON zu parsen
-    let reelTexts;
-    try {
-      // Reinige die Response von möglichem Extra-Text
-      let cleanedResponse = responseText.trim();
-      
-      // Entferne mögliche Markdown Code-Blöcke
-      cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      
-      // Finde JSON Array im Response
-      const jsonMatch = cleanedResponse.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        cleanedResponse = jsonMatch[0];
-      }
-      
-      console.log('Cleaned response for parsing:', cleanedResponse.substring(0, 200) + '...');
-      
-      reelTexts = JSON.parse(cleanedResponse);
-      
-      // Validiere dass es ein Array ist
-      if (!Array.isArray(reelTexts)) {
-        throw new Error('Response is not an array');
-      }
-      
-      console.log('Successfully parsed JSON with', reelTexts.length, 'items');
-      
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-      console.error('Original Claude Response:', responseText);
-      
-      // Fallback: Erstelle manuell ein Beispiel-Array
-      reelTexts = [
-        {
-          hook: "MOMENT",
-          mainText: "Wenn der Ring\\nperfekt sitzt...\\nUnbezahlbar! ✨",
-          cta: "Buche deinen Moment 💍",
-          timing: "0-2s: Hook, 2-6s: Main, 6-8s: CTA",
-          emotion: "Romantik"
-        },
-        {
-          hook: "GEHEIMNIS",
-          mainText: "Das beste\\nHochzeitsfoto\\nentsteht ungestellt",
-          cta: "Lass uns reden! 📞",
-          timing: "0-2s: Hook, 2-5s: Main, 5-7s: CTA",
-          emotion: "Neugier"
-        },
-        {
-          hook: "WAHRHEIT",
-          mainText: "99% aller Bräute\\nvergessen dieses\\nDetail... 🤵‍♀️",
-          cta: "Was denkst du? 💭",
-          timing: "0-2s: Hook, 2-6s: Main, 6-8s: CTA",
-          emotion: "Spannung"
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #667eea 50%, #f093fb 75%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #ffffff;
+            overflow-x: hidden;
+            font-size: 14px;
         }
-      ];
-      
-      console.log('Using fallback reel texts due to parsing error');
-    }
 
-    // Validiere Response
-    if (!Array.isArray(reelTexts) || reelTexts.length === 0) {
-      throw new Error('Keine gültigen Reel-Texte generiert');
-    }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(15px);
+            padding: 32px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            max-height: 90vh;
+        }
 
-    // Stelle sicher, dass alle erforderlichen Felder vorhanden sind
-    const validatedTexts = reelTexts.map((text, index) => ({
-      id: index + 1,
-      hook: text.hook || "HOOK",
-      mainText: text.mainText || "Haupttext hier",
-      cta: text.cta || "Mehr erfahren",
-      timing: text.timing || "0-8s: Vollständiger Text",
-      emotion: text.emotion || "Interesse",
-      style: selectedStyleGuide.name
-    }));
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 32px;
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
 
-    return res.status(200).json({
-      success: true,
-      reelTexts: validatedTexts,
-      metadata: {
-        style: selectedStyleGuide.name,
-        count: validatedTexts.length,
-        generatedAt: new Date().toISOString()
-      }
-    });
+        .logo::before {
+            content: "🎬";
+            font-size: 28px;
+        }
 
-  } catch (error) {
-    console.error('=== DETAILED ERROR LOG ===');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Error status:', error.status);
-    
-    // Check if error response is HTML (Vercel error page)
-    if (error.message && error.message.includes('<!DOCTYPE html>')) {
-      console.error('❌ Received HTML error page instead of JSON');
-      return res.status(500).json({
-        error: 'Server-Fehler: Unerwartete HTML-Antwort',
-        success: false,
-        debug: 'API returned HTML instead of JSON - likely a Vercel configuration issue'
-      });
-    }
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
 
-    // Specific error handling
-    let statusCode = 500;
-    let userMessage = 'Unbekannter Server-Fehler';
+        .input-group {
+            margin-bottom: 28px;
+            position: relative;
+        }
 
-    if (error.message?.includes('API key')) {
-      statusCode = 401;
-      userMessage = 'API-Schlüssel ungültig';
-    } else if (error.status === 429) {
-      statusCode = 429;
-      userMessage = 'Rate Limit erreicht. Bitte warten.';
-    } else if (error.status === 400) {
-      statusCode = 400;
-      userMessage = 'Ungültige Anfrage';
-    }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+        }
 
-    return res.status(statusCode).json({
-      error: userMessage,
-      success: false,
-      timestamp: new Date().toISOString(),
-      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-}
+        .label-emoji {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            color: rgba(255, 255, 255, 0.95);
+            resize: none;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #f5576c;
+            box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .input-group input::placeholder,
+        .input-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .input-group textarea {
+            min-height: 100px;
+            line-height: 1.6;
+        }
+
+        /* Style Selection Buttons */
+        .style-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .style-option {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .style-option::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+            opacity: 0;
+        }
+
+        .style-option:hover::before {
+            animation: shimmer 0.6s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+                opacity: 0;
+            }
+        }
+
+        .style-option:hover {
+            transform: translateY(-3px) scale(1.02);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 24px rgba(245, 87, 108, 0.3);
+        }
+
+        .style-option.selected {
+            background: linear-gradient(135deg, #f5576c, #f093fb);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(245, 87, 108, 0.4);
+        }
+
+        .style-option.selected:hover {
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        .style-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .style-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .style-description {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+        }
+
+        .style-option.selected .style-description {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Optional Field Styling */
+        .optional-field {
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .optional-badge {
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Generate Button */
+        .generate-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5576c, #f093fb);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 8px 24px rgba(245, 87, 108, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .generate-btn:hover::before {
+            left: 100%;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(245, 87, 108, 0.5);
+        }
+
+        .generate-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-icon {
+            font-size: 20px;
+        }
+
+        /* Info Notice */
+        .info-notice {
+            background: rgba(103, 126, 234, 0.15);
+            border: 1px solid rgba(103, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 32px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+        }
+
+        .info-notice strong {
+            color: #667eea;
+        }
+
+        .info-notice .icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .step.active {
+            color: #f5576c;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .step.active .step-number {
+            background: linear-gradient(135deg, #f5576c, #f093fb);
+            color: white;
+        }
+
+        .step-arrow {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .results-section.visible {
+            display: block;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 24px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .reel-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .reel-card {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .reel-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #f5576c, #f093fb);
+        }
+
+        .reel-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(245, 87, 108, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-number {
+            background: linear-gradient(135deg, #f5576c, #f093fb);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .reel-hook {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f5576c;
+            margin-bottom: 12px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .reel-main {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.5;
+            margin-bottom: 12px;
+            text-align: center;
+            white-space: pre-line;
+        }
+
+        .reel-cta {
+            font-size: 13px;
+            color: #f093fb;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .copy-btn {
+            background: rgba(103, 126, 234, 0.2);
+            color: #667eea;
+            border: 1px solid rgba(103, 126, 234, 0.3);
+        }
+
+        .copy-btn:hover {
+            background: rgba(103, 126, 234, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn.copied {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+            border-color: rgba(40, 167, 69, 0.5);
+        }
+
+        .copy-btn.error {
+            background: rgba(220, 53, 69, 0.3) !important;
+            color: #dc3545 !important;
+            border-color: rgba(220, 53, 69, 0.5) !important;
+        }
+
+        .regenerate-btn {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+            border: 1px solid rgba(108, 117, 125, 0.3);
+        }
+
+        .regenerate-btn:hover {
+            background: rgba(108, 117, 125, 0.3);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .regenerate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .regenerate-section {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .regenerate-section .regenerate-btn {
+            background: rgba(108, 117, 125, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .regenerate-section .regenerate-btn:hover {
+            background: rgba(108, 117, 125, 0.4);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px;
+                margin: 10px;
+                max-height: 95vh;
+            }
+            
+            body {
+                font-size: 13px;
+                padding: 10px;
+            }
+            
+            .logo {
+                font-size: 20px;
+                margin-bottom: 24px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+                margin-bottom: 32px;
+            }
+
+            .style-selector {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .generate-btn {
+                padding: 18px;
+                font-size: 16px;
+            }
+
+            .progress-steps {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .step-arrow {
+                transform: rotate(90deg);
+            }
+
+            .reel-cards {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(245, 87, 108, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 87, 108, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <div class="logo">
+            Reel Text AI für Hochzeitsdienstleister
+        </div>
+
+        <div class="subtitle">
+            Erstelle emotionale Instagram Reel Overlay-Texte für dein Hochzeitsbusiness 💍<br>
+            Verwandle deine Hochzeitsvideos in buchungsstarke Content-Magneten
+        </div>
+
+        <div class="progress-steps">
+            <div class="step active">
+                <div class="step-number">1</div>
+                <span>Hochzeitsvideo beschreiben</span>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <span>Hochzeitsservice definieren</span>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <span>Stil wählen</span>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <span>Texte generieren</span>
+            </div>
+        </div>
+
+        <div class="info-notice">
+            <span class="icon">💡</span>
+            <strong>Pro-Tipp für Hochzeitsdienstleister:</strong> Je emotionaler und detaillierter du dein Hochzeitsvideo und deinen Service beschreibst, desto berührender werden die generierten Overlay-Texte. Die KI erstellt Hook-Texte, emotionale Trigger und Buchungsaufforderungen, die Brautpaare zum Träumen bringen!
+        </div>
+
+        <div class="input-group">
+            <label>
+                <span class="label-emoji">🎥</span>
+                Was sehe ich in deinem Hochzeitsvideo?
+            </label>
+            <textarea 
+                id="backgroundVideo" 
+                placeholder="z.B. Eine Braut, die emotional ihren Brautstrauß wirft, strahlende Gesichter der Gäste, ein Paar beim ersten Tanz in goldenem Licht, Detailaufnahmen von Ringen und Dekoration..."
+                rows="3"
+            ></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>
+                <span class="label-emoji">💼</span>
+                Welchen Hochzeitsservice bietest du an?
+            </label>
+            <textarea 
+                id="service" 
+                placeholder="z.B. Hochzeitsfotografie für emotionale Momente, Hochzeitsplanung für Märchenhochzeiten, Brautstyling für den perfekten Look, Hochzeitslocation-Vermietung..."
+                rows="2"
+            ></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>
+                <span class="label-emoji">✨</span>
+                Stil des Textes
+            </label>
+            <div class="style-selector" id="styleSelector">
+                <div class="style-option" data-style="inspiration">
+                    <span class="style-icon">✨</span>
+                    <div class="style-title">Emotional</div>
+                    <div class="style-description">Berührend, romantisch und träumerisch. Perfekt für Hochzeitsmagie und emotionale Momente.</div>
+                </div>
+                <div class="style-option" data-style="funny">
+                    <span class="style-icon">😄</span>
+                    <div class="style-title">Humorvoll</div>
+                    <div class="style-description">Locker, charmant und unterhaltsam. Ideal für lockere Paare und entspannte Hochzeitsstimmung.</div>
+                </div>
+                <div class="style-option" data-style="realtalk">
+                    <span class="style-icon">💯</span>
+                    <div class="style-title">Authentisch</div>
+                    <div class="style-description">Ehrlich, persönlich und vertrauensvoll. Baut Vertrauen zu Brautpaaren auf und zeigt echte Expertise.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="optional-field">
+                <div class="optional-badge">Optional</div>
+                <label>
+                    <span class="label-emoji">💭</span>
+                    Hast du schon eine Idee für dein Hochzeits-Reel?
+                </label>
+                <textarea 
+                    id="reelIdea" 
+                    placeholder="z.B. Ich möchte zeigen, wie wichtig der perfekte Moment für Hochzeitsfotos ist und dass jedes Detail zählt, um die Liebe eines Paares für die Ewigkeit festzuhalten..."
+                    rows="3"
+                ></textarea>
+            </div>
+        </div>
+
+        <button class="generate-btn pulse" id="generateBtn">
+            <span class="btn-icon">💍</span>
+            Hochzeits-Reel-Texte generieren
+        </button>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <div class="results-title">
+                <span>✨</span>
+                Deine generierten Reel-Texte
+                <span>💍</span>
+            </div>
+            <div class="reel-cards" id="reelCards">
+                <!-- Generated cards will be inserted here -->
+            </div>
+            <div class="regenerate-section">
+                <button class="regenerate-btn" id="regenerateBtn">
+                    <span>🔄</span>
+                    Neue Varianten generieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentFormData = null;
+        let generatedTexts = [];
+
+        // DOM Elements
+        const styleOptions = document.querySelectorAll('.style-option');
+        const generateBtn = document.getElementById('generateBtn');
+        const regenerateBtn = document.getElementById('regenerateBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const reelCards = document.getElementById('reelCards');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Handle style selection
+            styleOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    styleOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    updateProgressSteps();
+                });
+            });
+
+            // Auto-resize textareas
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+                    updateProgressSteps();
+                });
+            });
+
+            // Generate button
+            generateBtn.addEventListener('click', generateReelTexts);
+            regenerateBtn.addEventListener('click', regenerateTexts);
+
+            // Initial progress update
+            updateProgressSteps();
+
+            // Entrance animations
+            setTimeout(() => {
+                document.querySelectorAll('.input-group').forEach((group, index) => {
+                    setTimeout(() => {
+                        group.style.opacity = '0';
+                        group.style.transform = 'translateY(20px)';
+                        group.style.transition = 'all 0.5s ease';
+                        setTimeout(() => {
+                            group.style.opacity = '1';
+                            group.style.transform = 'translateY(0)';
+                        }, 50);
+                    }, index * 100);
+                });
+            }, 500);
+        }
+
+        function updateProgressSteps() {
+            const steps = document.querySelectorAll('.step');
+            const backgroundVideo = document.getElementById('backgroundVideo').value.trim();
+            const service = document.getElementById('service').value.trim();
+            const selectedStyle = document.querySelector('.style-option.selected');
+
+            // Reset all steps
+            steps.forEach(step => step.classList.remove('active'));
+
+            // Activate steps based on completion
+            steps[0].classList.add('active');
+
+            if (backgroundVideo) {
+                steps[1].classList.add('active');
+            }
+
+            if (backgroundVideo && service) {
+                steps[2].classList.add('active');
+            }
+
+            if (backgroundVideo && service && selectedStyle) {
+                steps[3].classList.add('active');
+            }
+        }
+
+        async function generateReelTexts() {
+            const formData = getFormData();
+            
+            if (!validateForm(formData)) {
+                return;
+            }
+
+            console.log('Sending request with data:', formData);
+            currentFormData = formData;
+            setLoadingState(true);
+
+            try {
+                const response = await fetch('/api/generate-reel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                // Check if response is actually JSON
+                const contentType = response.headers.get('content-type');
+                console.log('Content-Type:', contentType);
+                
+                // Get response text first
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON Parse Error:', parseError);
+                    throw new Error(`Server returned invalid JSON. Status: ${response.status}. Response: ${responseText.substring(0, 200)}...`);
+                }
+                
+                console.log('Parsed response data:', data);
+
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}: ${data.details || 'Unbekannter Fehler'}`);
+                }
+
+                generatedTexts = data.reelTexts;
+                displayResults(data.reelTexts);
+
+            } catch (error) {
+                console.error('=== COMPLETE ERROR DETAILS ===');
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                
+                // Benutzerfreundliche Fehlermeldung mit mehr Details
+                let userMessage = error.message;
+                
+                if (error.message.includes('Failed to fetch')) {
+                    userMessage = 'Verbindungsfehler. Bitte überprüfe deine Internetverbindung und versuche es erneut.';
+                } else if (error.message.includes('NetworkError')) {
+                    userMessage = 'Netzwerkfehler. Bitte versuche es in wenigen Sekunden erneut.';
+                }
+                
+                // Detaillierte Error-Anzeige für Debugging
+                alert(`❌ Fehler bei der Generierung:\n\n${userMessage}\n\nTechnische Details:\n${error.message}\n\nBitte prüfe die Browser-Konsole für weitere Details.`);
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        async function regenerateTexts() {
+            if (!currentFormData) {
+                alert('Bitte generiere zuerst Texte!');
+                return;
+            }
+
+            regenerateBtn.disabled = true;
+            regenerateBtn.innerHTML = '<span>⏳</span> Generiere neue Varianten...';
+
+            try {
+                const response = await fetch('/api/generate-reel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(currentFormData)
+                });
+
+                const responseText = await response.text();
+                const data = JSON.parse(responseText);
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Fehler bei der Regenerierung');
+                }
+
+                generatedTexts = data.reelTexts;
+                displayResults(data.reelTexts);
+
+            } catch (error) {
+                console.error('Regeneration Error:', error);
+                alert(`Fehler bei der Regenerierung: ${error.message}`);
+            } finally {
+                regenerateBtn.disabled = false;
+                regenerateBtn.innerHTML = '<span>🔄</span> Neue Varianten generieren';
+            }
+        }
+
+        function getFormData() {
+            return {
+                backgroundVideo: document.getElementById('backgroundVideo').value.trim(),
+                service: document.getElementById('service').value.trim(),
+                style: document.querySelector('.style-option.selected')?.dataset.style || '',
+                optionalIdea: document.getElementById('reelIdea').value.trim()
+            };
+        }
+
+        function validateForm(formData) {
+            if (!formData.backgroundVideo) {
+                alert('Bitte beschreibe dein Hochzeitsvideo!');
+                document.getElementById('backgroundVideo').focus();
+                return false;
+            }
+
+            if (!formData.service) {
+                alert('Bitte beschreibe deinen Hochzeitsservice!');
+                document.getElementById('service').focus();
+                return false;
+            }
+
+            if (!formData.style) {
+                alert('Bitte wähle einen Text-Stil aus!');
+                return false;
+            }
+
+            return true;
+        }
+
+        function setLoadingState(isLoading) {
+            if (isLoading) {
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<span class="btn-icon">⏳</span>Generiere Hochzeits-Reel-Texte...';
+                
+                // Show loading in results section
+                resultsSection.classList.add('visible');
+                reelCards.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <div>Erstelle emotionale Reel-Texte für dein Hochzeitsbusiness...</div>
+                    </div>
+                `;
+            } else {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<span class="btn-icon">💍</span>Hochzeits-Reel-Texte generieren';
+            }
+        }
+
+        function displayResults(reelTexts) {
+            resultsSection.classList.add('visible');
+            
+            const cardsHTML = reelTexts.map((text, index) => `
+                <div class="reel-card" style="animation-delay: ${index * 0.1}s">
+                    <div class="card-header">
+                        <div class="card-number">Variante ${text.id}</div>
+                    </div>
+                    <div class="reel-hook">${text.hook}</div>
+                    <div class="reel-main">${text.mainText}</div>
+                    <div class="reel-cta">${text.cta}</div>
+                    <div class="card-actions">
+                        <button class="action-btn copy-btn" onclick="copyToClipboard(${text.id})">
+                            <span>📋</span> Kopieren
+                        </button>
+                        <button class="action-btn regenerate-btn" onclick="regenerateVariant(${text.id})">
+                            <span>🔄</span> Regenerate
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            reelCards.innerHTML = cardsHTML;
+
+            // Scroll to results
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        async function copyToClipboard(textId) {
+            const text = generatedTexts.find(t => t.id === textId);
+            if (!text) {
+                console.error('Text not found for ID:', textId);
+                return;
+            }
+
+            const fullText = `${text.hook}\n\n${text.mainText}\n\n${text.cta}`;
+            const button = event.target.closest('.copy-btn');
+            const originalHTML = button.innerHTML;
+            
+            console.log('Attempting to copy:', fullText);
+
+            try {
+                // Moderne Clipboard API (bevorzugt)
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(fullText);
+                    console.log('✅ Copied with Clipboard API');
+                } else {
+                    // Fallback für ältere Browser oder unsichere Kontexte
+                    console.log('Using fallback copy method');
+                    
+                    // Erstelle temporäres Textarea Element
+                    const textArea = document.createElement('textarea');
+                    textArea.value = fullText;
+                    textArea.style.position = 'fixed';
+                    textArea.style.top = '-1000px';
+                    textArea.style.left = '-1000px';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    
+                    // Fokussiere und selektiere
+                    textArea.focus();
+                    textArea.select();
+                    
+                    try {
+                        // Versuche mit execCommand zu kopieren
+                        const successful = document.execCommand('copy');
+                        if (!successful) {
+                            throw new Error('execCommand copy failed');
+                        }
+                        console.log('✅ Copied with execCommand');
+                    } finally {
+                        document.body.removeChild(textArea);
+                    }
+                }
+                
+                // Erfolgs-Feedback
+                button.classList.add('copied');
+                button.innerHTML = '<span>✅</span> Kopiert!';
+                
+                // Button nach 2 Sekunden zurücksetzen
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    button.innerHTML = originalHTML;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Copy failed:', error);
+                
+                // Fehlschlag-Feedback
+                button.classList.add('error');
+                button.innerHTML = '<span>❌</span> Fehler';
+                
+                // Fallback: Text in Modal anzeigen
+                showCopyModal(fullText);
+                
+                // Button nach 2 Sekunden zurücksetzen
+                setTimeout(() => {
+                    button.classList.remove('error');
+                    button.innerHTML = originalHTML;
+                }, 2000);
+            }
+        }
+
+        // Fallback Modal für manuelles Kopieren
+        function showCopyModal(text) {
+            // Erstelle Modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 20px;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: #1a1a2e;
+                padding: 30px;
+                border-radius: 16px;
+                max-width: 500px;
+                width: 100%;
+                color: white;
+                border: 1px solid rgba(255,255,255,0.2);
+            `;
+            
+            modalContent.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: #f5576c;">📋 Text manuell kopieren</h3>
+                <p style="margin: 0 0 15px 0; opacity: 0.8;">Bitte kopiere den Text manuell:</p>
+                <textarea readonly style="
+                    width: 100%;
+                    height: 150px;
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    padding: 12px;
+                    color: white;
+                    resize: none;
+                    font-family: monospace;
+                    margin-bottom: 15px;
+                ">${text}</textarea>
+                <button onclick="this.closest('[modal]').remove()" style="
+                    background: linear-gradient(135deg, #f5576c, #f093fb);
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    color: white;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">Schließen</button>
+            `;
+            
+            modal.setAttribute('modal', 'true');
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Automatisch Text selektieren
+            const textarea = modalContent.querySelector('textarea');
+            textarea.focus();
+            textarea.select();
+            
+            // Modal schließen bei Klick außerhalb
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        async function regenerateVariant(textId) {
+            if (!currentFormData) {
+                alert('Bitte generiere zuerst Texte!');
+                return;
+            }
+
+            const button = event.target.closest('.regenerate-btn');
+            const originalHTML = button.innerHTML;
+            const card = button.closest('.reel-card');
+            
+            // Loading State
+            button.disabled = true;
+            button.innerHTML = '<span>⏳</span> Generiere...';
+            card.style.opacity = '0.7';
+
+            try {
+                // API Call für neue Variante
+                const response = await fetch('/api/generate-reel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...currentFormData,
+                        // Zusätzlicher Parameter für Variationen
+                        regenerate: true,
+                        originalId: textId
+                    })
+                });
+
+                const responseText = await response.text();
+                const data = JSON.parse(responseText);
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Fehler bei der Regenerierung');
+                }
+
+                // Ersetze die spezifische Variante
+                const newText = data.reelTexts[0]; // Nimm die erste neue Variante
+                const currentTextIndex = generatedTexts.findIndex(t => t.id === textId);
+                
+                if (currentTextIndex !== -1) {
+                    // Behalte die ID bei, aber ersetze den Inhalt
+                    generatedTexts[currentTextIndex] = {
+                        ...newText,
+                        id: textId
+                    };
+                    
+                    // Update nur diese spezifische Karte
+                    updateSingleCard(card, generatedTexts[currentTextIndex]);
+                }
+
+            } catch (error) {
+                console.error('Regeneration Error:', error);
+                alert(`Fehler bei der Regenerierung: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+                card.style.opacity = '1';
+            }
+        }
+
+        function updateSingleCard(cardElement, newText) {
+            // Update Hook
+            const hookElement = cardElement.querySelector('.reel-hook');
+            hookElement.textContent = newText.hook;
+            
+            // Update Main Text
+            const mainElement = cardElement.querySelector('.reel-main');
+            mainElement.textContent = newText.mainText;
+            
+            // Update CTA
+            const ctaElement = cardElement.querySelector('.reel-cta');
+            ctaElement.textContent = newText.cta;
+            
+            // Kurze Animation für visuelles Feedback
+            cardElement.style.transform = 'scale(1.02)';
+            cardElement.style.transition = 'transform 0.3s ease';
+            
+            setTimeout(() => {
+                cardElement.style.transform = 'scale(1)';
+            }, 300);
+        }
+    </script>
+</body>
+</html>
