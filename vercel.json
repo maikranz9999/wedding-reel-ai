@@ -1,7 +1,16 @@
 {
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/index.html"
+    }
+  ],
   "functions": {
     "api/generate-reel.js": {
       "maxDuration": 30
+    },
+    "api/test.js": {
+      "maxDuration": 10
     }
   },
   "headers": [
