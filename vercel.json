@@ -7,10 +7,12 @@
   ],
   "functions": {
     "api/generate-reel.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "runtime": "nodejs18.x"
     },
     "api/test.js": {
-      "maxDuration": 10
+      "maxDuration": 10,
+      "runtime": "nodejs18.x"
     }
   },
   "headers": [
@@ -28,6 +30,10 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/json"
         }
       ]
     }
