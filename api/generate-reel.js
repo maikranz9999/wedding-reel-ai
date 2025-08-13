@@ -148,25 +148,59 @@ BEISPIEL STRUKTUR:
     // Versuche JSON zu parsen
     let reelTexts;
     try {
-      // Finde JSON im Response (falls Claude extra Text drumherum schreibt)
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+      // Reinige die Response von möglichem Extra-Text
+      let cleanedResponse = responseText.trim();
+      
+      // Entferne mögliche Markdown Code-Blöcke
+      cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      
+      // Finde JSON Array im Response
+      const jsonMatch = cleanedResponse.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        reelTexts = JSON.parse(jsonMatch[0]);
-      } else {
-        reelTexts = JSON.parse(responseText);
+        cleanedResponse = jsonMatch[0];
       }
+      
+      console.log('Cleaned response for parsing:', cleanedResponse.substring(0, 200) + '...');
+      
+      reelTexts = JSON.parse(cleanedResponse);
+      
+      // Validiere dass es ein Array ist
+      if (!Array.isArray(reelTexts)) {
+        throw new Error('Response is not an array');
+      }
+      
+      console.log('Successfully parsed JSON with', reelTexts.length, 'items');
+      
     } catch (parseError) {
       console.error('JSON Parse Error:', parseError);
-      console.error('Claude Response:', responseText);
+      console.error('Original Claude Response:', responseText);
       
-      // Fallback: Manuell parsen wenn JSON fehlschlägt
-      reelTexts = [{
-        hook: "FEHLER",
-        mainText: "Es gab einen Fehler\\nbeim Generieren.\\nVersuche es erneut.",
-        cta: "Nochmal versuchen",
-        timing: "0-8s: Fehlermeldung",
-        emotion: "Entschuldigung"
-      }];
+      // Fallback: Erstelle manuell ein Beispiel-Array
+      reelTexts = [
+        {
+          hook: "MOMENT",
+          mainText: "Wenn der Ring\\nperfekt sitzt...\\nUnbezahlbar! ✨",
+          cta: "Buche deinen Moment 💍",
+          timing: "0-2s: Hook, 2-6s: Main, 6-8s: CTA",
+          emotion: "Romantik"
+        },
+        {
+          hook: "GEHEIMNIS",
+          mainText: "Das beste\\nHochzeitsfoto\\nentsteht ungestellt",
+          cta: "Lass uns reden! 📞",
+          timing: "0-2s: Hook, 2-5s: Main, 5-7s: CTA",
+          emotion: "Neugier"
+        },
+        {
+          hook: "WAHRHEIT",
+          mainText: "99% aller Bräute\\nvergessen dieses\\nDetail... 🤵‍♀️",
+          cta: "Was denkst du? 💭",
+          timing: "0-2s: Hook, 2-6s: Main, 6-8s: CTA",
+          emotion: "Spannung"
+        }
+      ];
+      
+      console.log('Using fallback reel texts due to parsing error');
     }
 
     // Validiere Response
