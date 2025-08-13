@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+// Hauptprompt für Claude - EINFACHER ANSATZ
+    const prompt = `Erstelle 6 Instagram Reel Overlay-Texte für Hochzeitsdienstleister.import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
