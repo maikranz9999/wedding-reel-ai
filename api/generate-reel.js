@@ -20,13 +20,42 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Debug: Log environment variables (ohne sensitive Daten zu zeigen)
+  console.log('Environment Check:', {
+    hasApiKey: !!process.env.CLAUDE_API_KEY,
+    apiKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
+    model: process.env.CLAUDE_MODEL,
+    nodeEnv: process.env.NODE_ENV
+  });
+
+  // Early API Key Check
+  if (!process.env.CLAUDE_API_KEY) {
+    console.error('CLAUDE_API_KEY missing!');
+    return res.status(500).json({
+      error: 'Server-Konfigurationsfehler: API-Schlüssel fehlt',
+      success: false
+    });
+  }
+
   try {
-    const { backgroundVideo, service, style, optionalIdea } = req.body;
+    // Debug: Log request data
+    console.log('Request received:', {
+      backgroundVideo: backgroundVideo?.substring(0, 50) + '...',
+      service: service?.substring(0, 50) + '...',
+      style: style,
+      hasOptionalIdea: !!optionalIdea
+    });
 
     // Validation
     if (!backgroundVideo || !service || !style) {
+      console.log('Validation failed:', { backgroundVideo: !!backgroundVideo, service: !!service, style: !!style });
       return res.status(400).json({ 
-        error: 'Pflichtfelder fehlen: backgroundVideo, service und style sind erforderlich' 
+        error: 'Pflichtfelder fehlen: backgroundVideo, service und style sind erforderlich',
+        missing: {
+          backgroundVideo: !backgroundVideo,
+          service: !service,
+          style: !style
+        }
       });
     }
 
@@ -90,7 +119,11 @@ BEISPIEL STRUKTUR:
   }
 ]
 
-Erstelle 6 solche Varianten im JSON Format:`;
+    // Debug: Log prompt being sent
+    console.log('Sending prompt to Claude...', {
+      promptLength: prompt.length,
+      style: selectedStyleGuide.name
+    });
 
     // Claude API Call
     const message = await anthropic.messages.create({
@@ -103,6 +136,11 @@ Erstelle 6 solche Varianten im JSON Format:`;
           content: prompt
         }
       ]
+    });
+
+    console.log('Claude response received:', {
+      contentLength: message.content[0]?.text?.length || 0,
+      contentPreview: message.content[0]?.text?.substring(0, 100) + '...'
     });
 
     const responseText = message.content[0].text;
@@ -158,12 +196,49 @@ Erstelle 6 solche Varianten im JSON Format:`;
     });
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Error Details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      status: error.status,
+      headers: error.headers
+    });
     
-    return res.status(500).json({
-      error: 'Fehler bei der Text-Generierung',
-      details: error.message,
-      success: false
+    // Spezifische Fehlermeldungen für häufige Probleme
+    let userMessage = 'Fehler bei der Text-Generierung';
+    let statusCode = 500;
+    
+    if (error.message?.includes('API key')) {
+      userMessage = 'API-Schlüssel fehlt oder ist ungültig';
+      statusCode = 401;
+    } else if (error.message?.includes('rate limit') || error.status === 429) {
+      userMessage = 'Rate Limit erreicht. Bitte versuche es in einer Minute erneut.';
+      statusCode = 429;
+    } else if (error.message?.includes('timeout')) {
+      userMessage = 'Anfrage hat zu lange gedauert. Bitte versuche es erneut.';
+      statusCode = 408;
+    } else if (error.status === 400) {
+      userMessage = 'Ungültige Anfrage an die KI-API';
+      statusCode = 400;
+    } else if (error.status === 401) {
+      userMessage = 'Authentifizierungsfehler bei der KI-API';
+      statusCode = 401;
+    } else if (error.status === 403) {
+      userMessage = 'Zugriff auf die KI-API wurde verweigert';
+      statusCode = 403;
+    }
+    
+    return res.status(statusCode).json({
+      error: userMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      success: false,
+      timestamp: new Date().toISOString(),
+      debugInfo: process.env.NODE_ENV === 'development' ? {
+        errorName: error.name,
+        errorStatus: error.status,
+        hasApiKey: !!process.env.CLAUDE_API_KEY,
+        apiKeyLength: process.env.CLAUDE_API_KEY?.length || 0
+      } : undefined
     });
   }
 }
