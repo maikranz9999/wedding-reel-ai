@@ -158,7 +158,7 @@ BEISPIEL STRUKTUR:
 
     // Claude API Call
     const message = await anthropic.messages.create({
-      model: process.env.CLAUDE_MODEL || 'claude-3-sonnet-20240229',
+      model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
       max_tokens: 2000,
       temperature: 0.8,
       messages: [
