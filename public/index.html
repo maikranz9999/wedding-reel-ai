@@ -885,6 +885,7 @@
                 return;
             }
 
+            console.log('Sending request with data:', formData);
             currentFormData = formData;
             setLoadingState(true);
 
@@ -897,18 +898,31 @@
                     body: JSON.stringify(formData)
                 });
 
+                console.log('Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('Response data:', data);
 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Fehler bei der Generierung');
+                    throw new Error(data.error || `HTTP ${response.status}: ${data.details || 'Unbekannter Fehler'}`);
                 }
 
                 generatedTexts = data.reelTexts;
                 displayResults(data.reelTexts);
 
             } catch (error) {
-                console.error('Generation Error:', error);
-                alert(`Fehler bei der Generierung: ${error.message}`);
+                console.error('Generation Error Details:', error);
+                
+                // Benutzerfreundliche Fehlermeldung
+                let userMessage = error.message;
+                
+                if (error.message.includes('Failed to fetch')) {
+                    userMessage = 'Verbindungsfehler. Bitte überprüfe deine Internetverbindung und versuche es erneut.';
+                } else if (error.message.includes('NetworkError')) {
+                    userMessage = 'Netzwerkfehler. Bitte versuche es in wenigen Sekunden erneut.';
+                }
+                
+                alert(`❌ Fehler bei der Generierung:\n\n${userMessage}\n\nBitte versuche es erneut oder kontaktiere den Support.`);
             } finally {
                 setLoadingState(false);
             }
