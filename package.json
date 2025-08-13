@@ -1,0 +1,26 @@
+
+{
+  "name": "wedding-reel-ai",
+  "version": "1.0.0",
+  "description": "Instagram Reel Overlay Text Generator für Hochzeitsdienstleister",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed'",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.3"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "instagram",
+    "reels", 
+    "hochzeit",
+    "wedding",
+    "ai",
+    "claude"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
