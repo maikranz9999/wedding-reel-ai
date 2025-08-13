@@ -8,9 +8,7 @@
     "build": "echo 'Static site - no build needed'",
     "start": "vercel dev"
   },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.24.3"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "keywords": [
     "instagram",
@@ -18,7 +16,7 @@
     "hochzeit",
     "wedding",
     "ai",
-    "claude"
+    "template"
   ],
   "author": "Your Name",
   "license": "MIT"
