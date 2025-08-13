@@ -1,66 +1,95 @@
-// Hauptprompt für Claude - EINFACHER ANSATZ
-    const prompt = `Erstelle 6 Instagram Reel Overlay-Texte für Hochzeitsdienstleister.import Anthropic from '@anthropic-ai/sdk';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
-});
-
-// Einfache API ohne externe Dependencies
-
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
+  // DEBUGGING: Environment Check
+  console.log('=== ENVIRONMENT DEBUG ===');
+  console.log('API Key exists:', !!process.env.CLAUDE_API_KEY);
+  console.log('API Key length:', process.env.CLAUDE_API_KEY?.length || 0);
+  console.log('Model:', process.env.CLAUDE_MODEL);
+  console.log('Request method:', req.method);
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      error: 'Method not allowed',
+      method: req.method,
+      success: false 
+    });
   }
 
-  // Debug: Log environment variables (ohne sensitive Daten zu zeigen)
-  console.log('Environment Check:', {
-    hasApiKey: !!process.env.CLAUDE_API_KEY,
-    apiKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
-    model: process.env.CLAUDE_MODEL,
-    nodeEnv: process.env.NODE_ENV
-  });
-
-  // Early API Key Check
+  // API Key Validation
   if (!process.env.CLAUDE_API_KEY) {
-    console.error('CLAUDE_API_KEY missing!');
+    console.error('❌ CLAUDE_API_KEY is missing!');
     return res.status(500).json({
       error: 'Server-Konfigurationsfehler: API-Schlüssel fehlt',
-      success: false
+      success: false,
+      debug: 'CLAUDE_API_KEY environment variable not set'
+    });
+  }
+
+  if (!process.env.CLAUDE_API_KEY.startsWith('sk-ant-')) {
+    console.error('❌ Invalid API Key format!');
+    return res.status(500).json({
+      error: 'Server-Konfigurationsfehler: Ungültiger API-Schlüssel',
+      success: false,
+      debug: 'API Key does not start with sk-ant-'
     });
   }
 
   try {
-    // Debug: Log request data
-    console.log('Request received:', {
-      backgroundVideo: backgroundVideo?.substring(0, 50) + '...',
-      service: service?.substring(0, 50) + '...',
-      style: style,
-      hasOptionalIdea: !!optionalIdea
-    });
+    // Destructure request body with defaults
+    const {
+      backgroundVideo = '',
+      service = '',
+      style = '',
+      optionalIdea = ''
+    } = req.body || {};
 
-    // Validation
+    // Input validation
     if (!backgroundVideo || !service || !style) {
-      console.log('Validation failed:', { backgroundVideo: !!backgroundVideo, service: !!service, style: !!style });
+      console.log('❌ Validation failed:', { 
+        backgroundVideo: !!backgroundVideo, 
+        service: !!service, 
+        style: !!style 
+      });
       return res.status(400).json({ 
         error: 'Pflichtfelder fehlen: backgroundVideo, service und style sind erforderlich',
         missing: {
           backgroundVideo: !backgroundVideo,
           service: !service,
           style: !style
-        }
+        },
+        success: false
       });
     }
+
+    // Import Anthropic SDK
+    let Anthropic;
+    try {
+      const anthropicModule = await import('@anthropic-ai/sdk');
+      Anthropic = anthropicModule.default;
+      console.log('✅ Anthropic SDK imported successfully');
+    } catch (importError) {
+      console.error('❌ Failed to import Anthropic SDK:', importError);
+      return res.status(500).json({
+        error: 'Server-Fehler: SDK kann nicht geladen werden',
+        success: false,
+        debug: importError.message
+      });
+    }
+
+    // Initialize Anthropic client
+    const anthropic = new Anthropic({
+      apiKey: process.env.CLAUDE_API_KEY,
+    });
 
     // Style-spezifische Richtlinien
     const styleGuidelines = {
@@ -120,9 +149,8 @@ BEISPIEL STRUKTUR:
     "timing": "0-2s: Hook, 2-5s: Main, 5-7s: CTA",
     "emotion": "Humor"
   }
-]
+]`;
 
-    // Debug: Log prompt being sent
     console.log('Sending prompt to Claude...', {
       promptLength: prompt.length,
       style: selectedStyleGuide.name
@@ -233,49 +261,42 @@ BEISPIEL STRUKTUR:
     });
 
   } catch (error) {
-    console.error('API Error Details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      status: error.status,
-      headers: error.headers
-    });
+    console.error('=== DETAILED ERROR LOG ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error status:', error.status);
     
-    // Spezifische Fehlermeldungen für häufige Probleme
-    let userMessage = 'Fehler bei der Text-Generierung';
-    let statusCode = 500;
-    
-    if (error.message?.includes('API key')) {
-      userMessage = 'API-Schlüssel fehlt oder ist ungültig';
-      statusCode = 401;
-    } else if (error.message?.includes('rate limit') || error.status === 429) {
-      userMessage = 'Rate Limit erreicht. Bitte versuche es in einer Minute erneut.';
-      statusCode = 429;
-    } else if (error.message?.includes('timeout')) {
-      userMessage = 'Anfrage hat zu lange gedauert. Bitte versuche es erneut.';
-      statusCode = 408;
-    } else if (error.status === 400) {
-      userMessage = 'Ungültige Anfrage an die KI-API';
-      statusCode = 400;
-    } else if (error.status === 401) {
-      userMessage = 'Authentifizierungsfehler bei der KI-API';
-      statusCode = 401;
-    } else if (error.status === 403) {
-      userMessage = 'Zugriff auf die KI-API wurde verweigert';
-      statusCode = 403;
+    // Check if error response is HTML (Vercel error page)
+    if (error.message && error.message.includes('<!DOCTYPE html>')) {
+      console.error('❌ Received HTML error page instead of JSON');
+      return res.status(500).json({
+        error: 'Server-Fehler: Unerwartete HTML-Antwort',
+        success: false,
+        debug: 'API returned HTML instead of JSON - likely a Vercel configuration issue'
+      });
     }
-    
+
+    // Specific error handling
+    let statusCode = 500;
+    let userMessage = 'Unbekannter Server-Fehler';
+
+    if (error.message?.includes('API key')) {
+      statusCode = 401;
+      userMessage = 'API-Schlüssel ungültig';
+    } else if (error.status === 429) {
+      statusCode = 429;
+      userMessage = 'Rate Limit erreicht. Bitte warten.';
+    } else if (error.status === 400) {
+      statusCode = 400;
+      userMessage = 'Ungültige Anfrage';
+    }
+
     return res.status(statusCode).json({
       error: userMessage,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       success: false,
       timestamp: new Date().toISOString(),
-      debugInfo: process.env.NODE_ENV === 'development' ? {
-        errorName: error.name,
-        errorStatus: error.status,
-        hasApiKey: !!process.env.CLAUDE_API_KEY,
-        apiKeyLength: process.env.CLAUDE_API_KEY?.length || 0
-      } : undefined
+      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
