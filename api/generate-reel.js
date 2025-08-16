@@ -78,20 +78,16 @@ WICHTIG:
 - Zielgruppe: Brautpaare im Premiumsegment
 - Jeder Text soll als Instagram Reel Overlay funktionieren
 
+WICHTIG für das JSON-Format:
+- Verwende nur gerade Anführungszeichen (")
+- Keine Zeilenumbrüche im Text
+- Verwende \\n für Zeilenumbrüche
+- Escape alle Sonderzeichen korrekt
+
 Erstelle 6 verschiedene Texte mit unterschiedlichen Humor-Formaten.
 
 FORMAT (genau so ausgeben):
 {"reelTexts":[{"id":1,"hook":"Kurzer Hook/Aufhänger","mainText":"Haupttext hier","cta":"Call-to-Action","emotion":"witzig"}]}`;
-
-    } else if (style === 'inspiration') {
-      promptContent = `Erstelle 6 emotionale, romantische Instagram Reel Texte für:
-Video: ${backgroundVideo}
-Service: ${service}
-${optionalIdea ? `Idee: ${optionalIdea}` : ''}
-
-Stil: Emotional, träumerisch, herzberührend. Fokus auf Gefühle und magische Momente.
-
-FORMAT: {"reelTexts":[{"id":1,"hook":"Hook","mainText":"Text","cta":"CTA","emotion":"emotional"}]}`;
 
     } else if (style === 'realtalk') {
       promptContent = `Du erstellst authentische, ehrliche Instagram Reel Texte für Hochzeitsdienstleister im Premiumsegment.
@@ -145,6 +141,91 @@ WICHTIG für das JSON-Format:
 
 FORMAT (genau so ausgeben):
 {"reelTexts":[{"id":1,"hook":"Realtalk-Opener","mainText":"Ehrlicher Haupttext","cta":"Call-to-Action","emotion":"authentisch"}]}`;
+
+    } else if (style === 'inspiration') {
+      promptContent = `Du erstellst inspirierende Instagram Reel Texte für Hochzeitsdienstleister im Premiumsegment.
+
+AUFGABE: Erstelle 6 Inspirations-Texte basierend auf:
+- Video-Inhalt: ${backgroundVideo}
+- Service: ${service}
+${optionalIdea ? `- Zusätzliche Idee: ${optionalIdea}` : ''}
+
+ZWEI INSPIRATION-ARTEN:
+
+1. HARTE INSPIRATION (Educational Content):
+- Konkrete Tipps, Ratschläge, Empfehlungen
+- Fahrpläne und actionable Listen
+- Echter Mehrwert und Expertise
+- Beispiele: "10 Tipps für Hochzeitslocation-Buchung", "5 Must-Haves für Old Money Style", "3 Fehler bei der Dienstleister-Auswahl"
+
+2. SOFTE INSPIRATION (Vibes & Stimmung):
+- Beschreibt das Hintergrundvideo poetisch aber NICHT kitschig
+- Leichte Kost, emotionale Sprache ohne Übertreibung
+- Stimmungsvolle Aussagen mit Substanz
+- Fokus auf Gefühl und Atmosphäre
+- Das Hintergrundvideo muss IMMER mitspielen und zur Aussage passen
+
+BEISPIELE FÜR SOFTE INSPIRATION:
+
+POV-Style:
+- "POV: Stilvoll feiern heißt Positivität sichtbar und spürbar zu machen. Keine Langeweile, nur Flow."
+- "POV: Du bist ein absoluter Pizza-Lover und buchst dir für dein Hochzeitswochenende eine Pizza Ape statt eines Fünfgänge-Menüs"
+- "POV: Dein Getting Ready findet in einer 500-Jahre-alten Villa statt und fühlt sich an wie Zeitreise"
+- "POV: Wenn deine Gäste das erste Mal die Location sehen und einfach nur still werden"
+- "POV: Du sagst JA und im Hintergrund rauscht das Meer - mehr Soundtrack braucht man nicht"
+- "POV: Du heiratest an der Ostsee und dein Dinner findet im offenen Meer statt."
+
+Atmosphärische Beschreibungen:
+- "Es geht nicht um mehr, sondern um das was bleibt: unvergessliche Hochzeitsmomente stilvoll geplant, echt erlebt."
+- "Für mich bedeutet eine Luxushochzeit keine Übertreibung. Sondern Ruhe, Vertrauen und echte Leichtigkeit"
+- "Wenn Eleganz auf Authentizität trifft. Keine Show, nur echte Momente."
+- "Manche Orte erzählen ihre eigene Geschichte. Du musst nur zuhören."
+- "Es sind nicht die großen Gesten. Es sind die stillen Sekunden, die bleiben."
+- "champagne showers & main character energy."
+
+Video-bezogene Statements:
+- "Für die, die sich immer noch fragen, ob sie in Deutschland oder in Italien heiraten sollen. Schaut euch einfach das hier an."
+- "Stellt euch vor, dass es die Anreise eurer Hochzeitsgäste vom Vorabend - allein dafür lohnt es sich schon, in Italien zu heiraten ❤️"
+- "Für alle, die verstehen: Luxus ist, wenn nichts forciert werden muss"
+- "Seht ihr dieses Licht? Genau dafür plant man eine Hochzeit in der Toskana"
+- "Diese Aussicht. Diese Ruhe. Deshalb heiratet man auf einem Weingut."
+
+Kurze, prägnante Aussagen:
+- "Weniger Drama, mehr Magie"
+- "Quality over Quantity. Immer."
+- "Wenn der Ort schon perfekt ist, muss man ihn nur noch leben lassen"
+
+WICHTIGE REGELN FÜR SOFTE INSPIRATION:
+- NIEMALS kitschig oder übertrieben romantisch werden
+- Keine abgedroschenen Phrasen wie "Märchenhochzeit", "Traumtag", "wie im Märchen"
+- Stattdessen: Elegant, stilvoll, authentisch formulieren
+- Das Hintergrundvideo steht im Mittelpunkt
+- Leichte, aber substanzielle Sprache
+- Texte müssen zum Video-Inhalt passen
+
+TONALITÄT:
+- Inspirierend aber authentisch
+- Elegant ohne Kitsch
+- Emotional aber nicht übertrieben
+- Stilvoll und hochwertig
+- Fokus auf echte Momente statt Fantasy
+
+THEMEN FÜR INSPIRATION:
+- Stilvolle Hochzeitsplanung
+- Qualität über Quantität
+- Echte Emotionen und Momente
+- Ästhetik und Design
+- Persönliche Details
+- Zeitlose Eleganz
+
+WICHTIG für das JSON-Format:
+- Verwende nur gerade Anführungszeichen (")
+- Keine Zeilenumbrüche im Text
+- Verwende \\n für Zeilenumbrüche
+- Escape alle Sonderzeichen korrekt
+
+FORMAT (genau so ausgeben):
+{"reelTexts":[{"id":1,"hook":"Inspirierender Opener","mainText":"Inspirierender Haupttext","cta":"Call-to-Action","emotion":"inspirierend"}]}`;
     }
 
     const message = await anthropic.messages.create({
