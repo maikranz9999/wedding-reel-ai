@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       max_tokens: 1500,
       messages: [{
         role: 'user',
-        content: `Erstelle 3 Instagram Reel Texte für: Video: ${backgroundVideo}, Service: ${service}, Stil: ${style}. Format: {"reelTexts":[{"id":1,"hook":"TEST","mainText":"Text hier","cta":"CTA hier","emotion":"Emotion"}]}`
+        content: `Erstelle 6 Instagram Reel Texte für: Video: ${backgroundVideo}, Service: ${service}, Stil: ${style}. Format: {"reelTexts":[{"id":1,"hook":"TEST","mainText":"Text hier","cta":"CTA hier","emotion":"Emotion"}]}`
       }]
     });
 
