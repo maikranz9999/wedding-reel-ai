@@ -114,13 +114,26 @@ FORMAT: {"reelTexts":[{"id":1,"hook":"Hook","mainText":"Text","cta":"CTA","emoti
     });
 
     const response = message.content[0].text;
+    console.log('Raw AI Response:', response); // Debug
+    
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     
     if (!jsonMatch) {
       throw new Error('Kein gültiges JSON in der Antwort gefunden');
     }
     
-    const parsed = JSON.parse(jsonMatch[0]);
+    // JSON bereinigen
+    let jsonStr = jsonMatch[0]
+      .replace(/[\n\r\t]/g, ' ') // Zeilenumbrüche entfernen
+      .replace(/\\/g, '\\\\') // Backslashes escapen
+      .replace(/"/g, '\\"') // Anführungszeichen escapen
+      .replace(/\\"/g, '"') // Wieder rückgängig für JSON-Struktur
+      .replace(/"\s*:\s*"/g, '":"') // Leerzeichen um Doppelpunkte entfernen
+      .trim();
+    
+    console.log('Cleaned JSON:', jsonStr); // Debug
+    
+    const parsed = JSON.parse(jsonStr);
 
     return res.status(200).json({
       success: true,
