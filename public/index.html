@@ -6,7 +6,7 @@
     <title>Reel Text AI - Hochzeitsdienstleister Instagram Generator</title>
     <meta name="description" content="Erstelle emotionale Instagram Reel Overlay-Texte für Hochzeitsdienstleister. Kreativ, buchungsstark und herzberührend.">
     <meta name="keywords" content="Hochzeitsdienstleister, Instagram Reels, Hochzeitsfotograf, Hochzeitsplaner, Social Media, KI Generator">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎬%3C/text%3E%3C/svg%3E">
     <style>
         * {
             margin: 0;
@@ -76,11 +76,6 @@
             margin-bottom: 12px;
             font-size: 15px;
             letter-spacing: 0.3px;
-        }
-
-        .label-emoji {
-            margin-right: 8px;
-            font-size: 16px;
         }
 
         .input-group input,
@@ -655,7 +650,7 @@
         </div>
 
         <div class="subtitle">
-            Erstelle emotionale Instagram Reel Overlay-Texte für dein Hochzeitsbusiness 💍<br>
+            Erstelle emotionale Instagram Reel Overlay-Texte für dein Hochzeitsbusiness<br>
             Verwandle deine Hochzeitsvideos in buchungsstarke Content-Magneten
         </div>
 
@@ -682,13 +677,12 @@
         </div>
 
         <div class="info-notice">
-            <span class="icon">💍</span>
+            <span class="icon"></span>
             <strong>Pro-Tipp für Hochzeitsdienstleister:</strong> Je emotionaler und detaillierter du dein Hochzeitsvideo und deinen Service beschreibst, desto berührender werden die generierten Overlay-Texte. Die KI erstellt Hook-Texte, emotionale Trigger und Buchungsaufforderungen, die Brautpaare zum Träumen bringen!
         </div>
 
         <div class="input-group">
             <label>
-                <span class="label-emoji">🎥</span>
                 Was sehe ich in deinem Hochzeitsvideo?
             </label>
             <textarea 
@@ -700,7 +694,6 @@
 
         <div class="input-group">
             <label>
-                <span class="label-emoji">💼</span>
                 Welchen Hochzeitsservice bietest du an?
             </label>
             <textarea 
@@ -712,14 +705,13 @@
 
         <div class="input-group">
             <label>
-                <span class="label-emoji">✨</span>
                 Stil des Textes
             </label>
             <div class="style-selector" id="styleSelector">
                 <div class="style-option" data-style="inspiration">
                     <span class="style-icon">✨</span>
-                    <div class="style-title">Emotional</div>
-                    <div class="style-description">Berührend, romantisch und träumerisch. Perfekt für Hochzeitsmagie und emotionale Momente.</div>
+                    <div class="style-title">Inspiration</div>
+                    <div class="style-description">Tipps, Empfehlungen und Inspiration. Perfekt für hilfreiche Inhalte und wertvolle Hochzeits-Inspiration.</div>
                 </div>
                 <div class="style-option" data-style="funny">
                     <span class="style-icon">😄</span>
@@ -728,18 +720,17 @@
                 </div>
                 <div class="style-option" data-style="realtalk">
                     <span class="style-icon">💯</span>
-                    <div class="style-title">Authentisch</div>
-                    <div class="style-description">Ehrlich, persönlich und vertrauensvoll. Baut Vertrauen zu Brautpaaren auf und zeigt echte Expertise.</div>
+                    <div class="style-title">Realtalk</div>
+                    <div class="style-description">Direkt, ehrlich und ohne Filter. Zeigt die Realität hinter den Kulissen oder teile eine meinungsstarke Aussage!</div>
                 </div>
             </div>
         </div>
 
         <div class="input-group">
             <div class="optional-field">
-                <div class="optional-badge">Optional</div>
+                <div class="optional-badge">Optional, aber empfohlen</div>
                 <label>
-                    <span class="label-emoji">💭</span>
-                    Hast du schon eine Idee für dein Hochzeits-Reel?
+                    Hast du schon eine Idee für dein Reel?
                 </label>
                 <textarea 
                     id="reelIdea" 
@@ -750,23 +741,23 @@
         </div>
 
         <button class="generate-btn pulse" id="generateBtn">
-            <span class="btn-icon">💍</span>
+            <span class="btn-icon"></span>
             Hochzeits-Reel-Texte generieren
         </button>
 
         <!-- Results Section -->
         <div class="results-section" id="resultsSection">
             <div class="results-title">
-                <span>✨</span>
+                <span></span>
                 Deine generierten Reel-Texte
-                <span>💍</span>
+                <span></span>
             </div>
             <div class="reel-cards" id="reelCards">
                 <!-- Generated cards will be inserted here -->
             </div>
             <div class="regenerate-section">
                 <button class="regenerate-btn" id="regenerateBtn">
-                    <span>🔄</span>
+                    <span></span>
                     Neue Varianten generieren
                 </button>
             </div>
@@ -915,7 +906,7 @@
             }
 
             regenerateBtn.disabled = true;
-            regenerateBtn.innerHTML = '<span>⏳</span> Generiere neue Varianten...';
+            regenerateBtn.innerHTML = '<span></span> Generiere neue Varianten...';
 
             try {
                 const response = await fetch('/api/generate-reel', {
@@ -940,7 +931,7 @@
                 alert(`Fehler bei der Regenerierung: ${error.message}`);
             } finally {
                 regenerateBtn.disabled = false;
-                regenerateBtn.innerHTML = '<span>🔄</span> Neue Varianten generieren';
+                regenerateBtn.innerHTML = '<span></span> Neue Varianten generieren';
             }
         }
 
@@ -977,7 +968,7 @@
         function setLoadingState(isLoading) {
             if (isLoading) {
                 generateBtn.disabled = true;
-                generateBtn.innerHTML = '<span class="btn-icon">⏳</span>Generiere Hochzeits-Reel-Texte...';
+                generateBtn.innerHTML = '<span class="btn-icon"></span>Generiere Hochzeits-Reel-Texte...';
                 
                 // Show loading in results section
                 resultsSection.classList.add('visible');
@@ -989,7 +980,7 @@
                 `;
             } else {
                 generateBtn.disabled = false;
-                generateBtn.innerHTML = '<span class="btn-icon">💍</span>Hochzeits-Reel-Texte generieren';
+                generateBtn.innerHTML = '<span class="btn-icon"></span>Hochzeits-Reel-Texte generieren';
             }
         }
 
@@ -1005,10 +996,10 @@
                     <div class="reel-main">${text.mainText}</div>
                     <div class="card-actions">
                         <button class="action-btn copy-btn" onclick="copyToClipboard(${text.id})">
-                            <span>📋</span> Kopieren
+                            <span></span> Kopieren
                         </button>
                         <button class="action-btn favorite-btn" onclick="regenerateVariant(${text.id})">
-                            <span>🔄</span> Neu generieren
+                            <span></span> Neu generieren
                         </button>
                     </div>
                 </div>
@@ -1071,7 +1062,7 @@
                 
                 // Erfolgs-Feedback
                 button.classList.add('copied');
-                button.innerHTML = '<span>✅</span> Kopiert!';
+                button.innerHTML = '<span></span> Kopiert!';
                 
                 // Button nach 2 Sekunden zurücksetzen
                 setTimeout(() => {
@@ -1084,7 +1075,7 @@
                 
                 // Fehlschlag-Feedback
                 button.classList.add('error');
-                button.innerHTML = '<span>❌</span> Fehler';
+                button.innerHTML = '<span></span> Fehler';
                 
                 // Fallback: Text in Modal anzeigen
                 showCopyModal(fullText);
@@ -1127,7 +1118,7 @@
             `;
             
             modalContent.innerHTML = `
-                <h3 style="margin: 0 0 15px 0; color: #f5576c;">📋 Text manuell kopieren</h3>
+                <h3 style="margin: 0 0 15px 0; color: #f5576c;">Text manuell kopieren</h3>
                 <p style="margin: 0 0 15px 0; opacity: 0.8;">Bitte kopiere den Text manuell:</p>
                 <textarea readonly style="
                     width: 100%;
@@ -1180,7 +1171,7 @@
             const card = button.closest('.reel-card');
             
             button.disabled = true;
-            button.innerHTML = '<span>⏳</span> Generiert...';
+            button.innerHTML = '<span></span> Generiert...';
             card.style.opacity = '0.7';
 
             try {
