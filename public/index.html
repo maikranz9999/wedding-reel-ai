@@ -1016,7 +1016,7 @@
         function displayResults(reelTexts) {
             resultsSection.classList.add('visible');
             
-            const cardsHTML = reelTexts.map((text, index) => `
+            const cardsHTML = (reelTexts || []).map((text, index) => `
                 <div class="reel-card" style="animation-delay: ${index * 0.1}s">
                     <div class="card-header">
                         <div class="card-number">Variante ${text.id}</div>
