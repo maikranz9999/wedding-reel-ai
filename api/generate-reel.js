@@ -94,14 +94,57 @@ Stil: Emotional, träumerisch, herzberührend. Fokus auf Gefühle und magische M
 FORMAT: {"reelTexts":[{"id":1,"hook":"Hook","mainText":"Text","cta":"CTA","emotion":"emotional"}]}`;
 
     } else if (style === 'realtalk') {
-      promptContent = `Erstelle 6 authentische, ehrliche Instagram Reel Texte für:
-Video: ${backgroundVideo}
-Service: ${service}
-${optionalIdea ? `Idee: ${optionalIdea}` : ''}
+      promptContent = `Du erstellst authentische, ehrliche Instagram Reel Texte für Hochzeitsdienstleister im Premiumsegment.
 
-Stil: Authentisch, persönlich, vertrauensvoll. Zeige echte Expertise und baue Vertrauen auf.
+AUFGABE: Erstelle 6 "Realtalk"-Texte basierend auf:
+- Video-Inhalt: ${backgroundVideo}
+- Service: ${service}
+${optionalIdea ? `- Zusätzliche Idee: ${optionalIdea}` : ''}
 
-FORMAT: {"reelTexts":[{"id":1,"hook":"Hook","mainText":"Text","cta":"CTA","emotion":"authentisch"}]}`;
+REALTALK-OPENER (nutze verschiedene davon):
+- "Ich sags nur ungern, aber [unbequeme Wahrheit]"
+- "Unbequeme Wahrheit, aber sie muss gesagt werden: [Tatsache]"
+- "Ich kann es als [dein Service] absolut nicht verstehen, warum man immer noch denkt [Denkfehler]"
+- "Bitte alle einmal laut & deutlich nachsprechen: [wichtige Botschaft]"
+- "Ich weiß, die meisten Brautpaare wollen das nicht hören, aber..."
+- "Hand aufs Herz: [unbequeme Frage]"
+- "Sind wir doch mal ehrlich: [starke Meinung]"
+- "Ehrlich gesagt, das wird einigen nicht gefallen: [kontroverse Meinung]"
+- "Lasst uns bitte mal darüber reden, dass es nicht okay ist, wenn [problematisches Verhalten]"
+- "Es ist an der Zeit, dass das mal gesagt wird (auch wenn ich mir damit keine Freunde mache)"
+- "Warum redet eigentlich niemand über [Tabuthema] und welche Auswirkungen es auf [Konsequenz] hat?"
+
+REALTALK-PRINZIPIEN:
+- Unbequeme Wahrheiten aussprechen, die andere nicht sagen
+- Expertise und Fachwissen betonen
+- Direkte, ehrliche Ansprache ohne Schönfärberei
+- Branchenprobleme oder Missverständnisse aufdecken
+- Vertrauen durch Ehrlichkeit aufbauen
+- Manchmal kontrovers, aber immer konstruktiv
+
+TONALITÄT:
+- Ehrlich und direkt
+- Kompetent und vertrauensvoll
+- Manchmal unbequem, aber nie verletzend
+- Professionell trotz Kritik
+- Hilfsbereit und lösungsorientiert
+
+THEMEN FÜR REALTALK:
+- Budgetmissverständnisse und versteckte Kosten
+- Unrealistische Pinterest-Erwartungen vs. Realität
+- Planungsfehler, die teuer werden
+- Dienstleister-Auswahl und Qualitätsunterschiede
+- Zeitplanung und Last-Minute-Probleme
+- Gästemanagement und schwierige Familiendynamiken
+
+WICHTIG für das JSON-Format:
+- Verwende nur gerade Anführungszeichen (")
+- Keine Zeilenumbrüche im Text
+- Verwende \\n für Zeilenumbrüche
+- Escape alle Sonderzeichen korrekt
+
+FORMAT (genau so ausgeben):
+{"reelTexts":[{"id":1,"hook":"Realtalk-Opener","mainText":"Ehrlicher Haupttext","cta":"Call-to-Action","emotion":"authentisch"}]}`;
     }
 
     const message = await anthropic.messages.create({
