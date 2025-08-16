@@ -1017,25 +1017,22 @@
             resultsSection.classList.add('visible');
             
             const cardsHTML = (reelTexts || []).map((text, index) => `
-                <div class="reel-card" style="animation-delay: ${index * 0.1}s">
-                    <div class="card-header">
-                        <div class="card-number">Variante ${text.id}</div>
-                        <div class="emotion-tag">${text.emotion}</div>
-                    </div>
-                    <div class="reel-hook">${text.hook}</div>
-                    <div class="reel-main">${text.mainText}</div>
-                    <div class="reel-cta">${text.cta}</div>
-                    <div class="timing-info">⏰ ${text.timing}</div>
-                    <div class="card-actions">
-                        <button class="action-btn copy-btn" onclick="copyToClipboard(${text.id})">
-                            <span>📋</span> Kopieren
-                        </button>
-                        <button class="action-btn favorite-btn" onclick="toggleFavorite(${text.id})">
-                            <span>❤️</span> Favorit
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+    <div class="reel-card" style="animation-delay: ${index * 0.1}s">
+        <div class="card-header">
+            <div class="card-number">Variante ${text.id}</div>
+        </div>
+        <div class="reel-hook">${text.hook}</div>
+        <div class="reel-main">${text.mainText}</div>
+        <div class="card-actions">
+            <button class="action-btn copy-btn" onclick="copyToClipboard(${text.id})">
+                <span>📋</span> Kopieren
+            </button>
+            <button class="action-btn favorite-btn" onclick="regenerateVariant(${text.id})">
+                <span>🔄</span> Neu generieren
+            </button>
+        </div>
+    </div>
+`).join('');
 
             reelCards.innerHTML = cardsHTML;
 
