@@ -36,17 +36,18 @@ HUMOR-FORMATE (nutze verschiedene davon):
 
 1. LISTEN-STIL:
 - 3+ rhythmische Punkte mit mindestens einem ironischen Bruch
-- Pointe NICHT am Anfang, sondern Mitte/Ende
-- Beispiel: "3 Dinge für eine Luxus-Hochzeit: Champagner. Floristik für 5k. Und die Brautmutter, die alles kritisch beäugt."
+- WICHTIG: Entweder jeder Punkt ist in sich abgeschlossen ODER alle bauen logisch aufeinander auf
+- Keine Gedankensprünge zwischen den Punkten
+- Beispiel: "DIY-Hochzeit Checkliste: 47 italienische Dienstleister googeln. Mit Google Translate verhandeln. Am Ende 150k statt 100k ausgeben. Nervenzusammenbruch inklusive."
 
 2. FAKE-QUOTE / SATIRISCHE AUSSAGE:
-- Ironische "Zitate" von Personen (Bräutigam, Gäste, etc.)
-- Spielt mit Klischees und absurden Prioritäten
+- Das Zitat und die Erklärung müssen thematisch zusammenhängen
+- Die Pointe muss aus dem Setup logisch folgen
 - Beispiel: "Sätze, die Männer sagen, bevor die Braut ihn verlässt: 'Ich hab die Uhr storniert, damit wir uns Lake Como leisten können.'"
 
 3. PROVOKANTE ÜBERTREIBUNG:
-- Kernwahrheit + absurde Steigerung mit Augenzwinkern
-- Nicht albern, aber bewusst maßlos
+- Kernwahrheit + absurde Steigerung, aber mit logischer Verbindung
+- Jeder Teil muss thematisch mit dem vorherigen verknüpft sein
 - Beispiel: "Für diese Deko würde ich meine Schwiegermutter verkaufen."
 
 STIL-REGELN:
@@ -55,6 +56,14 @@ STIL-REGELN:
 - Ironische Kontraste einbauen
 - Kreative Fragen statt neutrale Aussagen
 - Bewusste Wortwahl: "Flachbild-TV" statt "Standard-Hotelzimmer"
+
+LOGIK-REGELN (SEHR WICHTIG):
+- Jeder Teil des Textes muss thematisch mit dem vorherigen verbunden sein
+- KEINE Gedankensprünge oder abrupte Themenwechsel
+- Die Pointe muss logisch aus dem Setup folgen
+- Wenn du das Thema wechselst, baue eine logische Brücke
+- Beispiel für SCHLECHT: "Wir haben alles im Griff" → italienisches Wort ohne Verbindung
+- Beispiel für GUT: DIY-Planung → Google Translate → höhere Kosten → Nervenzusammenbruch (alles baut aufeinander auf)
 
 THEMEN-FOKUS:
 - Deko-Fehlentscheidungen/Styling-Fauxpas
