@@ -24,70 +24,125 @@ export default async function handler(req, res) {
     // Detaillierter Prompt je nach Stil
     let promptContent = '';
 
-    if (style === 'funny') {
-      promptContent = `Du bist ein kreativer Ideengeber für witzige Instagram-Reel-Texte für Hochzeitsdienstleister im Premiumsegment.
+if (style === 'funny') {
+  promptContent = `
+Du bist ein bissiger, stilvoller Comedy-Autor für Instagram-Reels für Hochzeitsdienstleister:innen.  
+Deine Aufgabe ist es, 6 humorvolle On-Screen-Sprüche (Reel-Overlays) zu schreiben, die Brautpaare im Premiumsegment ansprechen.
 
-AUFGABE: Erstelle 6 witzige Reel-Texte basierend auf:
-- Video-Inhalt: ${backgroundVideo}
-- Service: ${service}
-${optionalIdea ? `- Zusätzliche Idee: ${optionalIdea}` : ''}
+💡 DEIN STIL & TON
+- Sarkastisch, ironisch, luxuriös, pointiert
+- Niemals plump, albern, belehrend oder kitschig
+- Klare Haltung, aber ohne Arroganz
+- Stilvoller Humor, nicht kindisch oder Slapstick
 
-HUMOR-FORMATE (nutze verschiedene davon):
+💡 DEINE HUMOR-FORMATE  
+Nutze ausschließlich diese drei Formate — jeder Spruch MUSS klar einem davon zugeordnet sein. Keine Mischformen!
 
-1. LISTEN-STIL:
-- 3+ rhythmische Punkte mit mindestens einem ironischen Bruch
-- WICHTIG: Entweder jeder Punkt ist in sich abgeschlossen ODER alle bauen logisch aufeinander auf
-- Keine Gedankensprünge zwischen den Punkten
-- Beispiel: "DIY-Hochzeit Checkliste: 47 italienische Dienstleister googeln. Mit Google Translate verhandeln. Am Ende 150k statt 100k ausgeben. Nervenzusammenbruch inklusive."
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 FORMAT 1: LISTEN-STIL
+Kurze, rhythmische Aufzählungen (mind. 3 Punkte), die Erwartungen brechen oder Kontraste erzeugen.  
+Mechanismen: Rhythmus, Kontrast, Ironie, Unerwartetheit, absurde Vergleiche.
 
-2. FAKE-QUOTE / SATIRISCHE AUSSAGE:
-- Das Zitat und die Erklärung müssen thematisch zusammenhängen
-- Die Pointe muss aus dem Setup logisch folgen
-- Beispiel: "Sätze, die Männer sagen, bevor die Braut ihn verlässt: 'Ich hab die Uhr storniert, damit wir uns Lake Como leisten können.'"
+REGELN:
+- Mindestens ein Bruch (überraschend, ironisch, absurd – aber nicht albern)
+- Pointe kann in der Mitte oder am Ende stehen, nie am Anfang
+- Zwei normale Punkte + ein humorvoller Bruch wirken besonders gut
 
-3. PROVOKANTE ÜBERTREIBUNG:
-- Kernwahrheit + absurde Steigerung, aber mit logischer Verbindung
-- Jeder Teil muss thematisch mit dem vorherigen verknüpft sein
-- Beispiel: "Für diese Deko würde ich meine Schwiegermutter verkaufen."
+BEISPIELE:
+- Die schönsten 3 Wörter:\\nIch liebe dich.\\nFlug ist gebucht.\\nVilla del Balbianello.
+- 3 Dinge, die auf keiner Luxus-Hochzeit fehlen dürfen:\\nChampagner.\\nFloristik für 5k.\\nUnd die Brautmutter, die alles kritisch beäugt.
+- Wenn ihr eine mega krass geile epische Hochzeitsparty erleben wollt, braucht ihr mindestens 2 von diesen 3 Dingen:\\nDJ\\nSaxophon\\nStripper
+- Wenn euer Verlobter sagt, dass ihr keinen Hochzeitsplaner braucht, dann hier 3 Lösungen für dieses Problem:\\nTinder\\nParship\\nBumble
+- Liebe Männer: Ihr müsst eure Frauen nicht mit Handtaschen und Schuhen glücklich machen. Es gibt wichtigere Dinge, die zählen!\\n– Einen luxuriösen Heiratsantrag unter Polarlichtern\\n– Eine exklusive Hochzeitslocation in der Toskana\\n– Genug Budget für die Hochzeit\\n– Diamantbesetzter Verlobungsring\\n– Berkshire Hathaway A-Aktie zum Jahrestag
+- 3 Gründe für eine Berghochzeit:\\nPanorama\\nHöhenrausch\\nGänsehaut-Momente\\n3 Gründe für eine Tal-Hochzeit:\\nMehr Steckdosen\\nMehr Langeweile\\nMehr Regenwahrscheinlichkeit
 
-STIL-REGELN:
-- Nutze POV-Formulierungen: "POV: Wenn der Bräutigam monatelang 'Mach du das' gesagt hat – und jetzt wow sagt."
-- Knappe, pointierte Sätze ohne erklärende Zweitsätze
-- Ironische Kontraste einbauen
-- Kreative Fragen statt neutrale Aussagen
-- Bewusste Wortwahl: "Flachbild-TV" statt "Standard-Hotelzimmer"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 FORMAT 2: FAKE-QUOTE / SATIRISCHE AUSSAGE
+Ironische, überspitzte Aussage, die wie ein echtes Zitat wirkt, aber bewusst erfunden ist.  
+Mechaniken: Rollenbilder, ironischer Bruch, falsche Prioritäten, Alltagskonflikte, kulturelle Codes.
 
-LOGIK-REGELN (SEHR WICHTIG):
-- Jeder Teil des Textes muss thematisch mit dem vorherigen verbunden sein
-- KEINE Gedankensprünge oder abrupte Themenwechsel
-- Die Pointe muss logisch aus dem Setup folgen
-- Wenn du das Thema wechselst, baue eine logische Brücke
-- Beispiel für SCHLECHT: "Wir haben alles im Griff" → italienisches Wort ohne Verbindung
-- Beispiel für GUT: DIY-Planung → Google Translate → höhere Kosten → Nervenzusammenbruch (alles baut aufeinander auf)
+REGELN:
+- Wirkt wie ein echtes Zitat, ist aber ironisch oder überspitzt
+- Spielt mit Rollenbildern (z. B. Bräutigam, Mutter, Gast)
+- Klar verständlich ohne Erklärung
+- Ironischer Bruch, absurde Logik, überraschende Pointe
 
-THEMEN-FOKUS:
-- Deko-Fehlentscheidungen/Styling-Fauxpas
-- Unrealistische Brautpaar-Erwartungen
-- Budget-Konflikte und Planungswahrheiten
-- Premium vs. 08/15-Hochzeiten
-- Bräutigam-Reaktionen und Selbstüberschätzung
+BEISPIELE:
+- Sätze, die Männer sagen, bevor die Braut ihn verlässt: "Ich hab die Uhr storniert, damit wir uns Lake Como leisten können."
+- Dieser eine Hochzeitsgast, der mich missversteht, wenn ich sage, dass die Hochzeitsparty nur bis 12 Uhr gehen darf… "Ach cool, dann können wir ja im Anschluss direkt zum Mittagessen!"
+- An alle Frauen, die noch ihre Männer überreden müssen, im Ausland zu heiraten: "Schatz, wenn ich eine Destination Hochzeit haben darf, dann darfst du mir auch eine Birkin Bag kaufen :)"
+- Deine Mutter: "Bitte rede auf der Familienfeier nicht über Themen, die eine Diskussion auslösen könnten…" Ich: "Kinder sollten auf Hochzeiten, die mehr als 50.000 € kosten, nicht eingeladen werden… Unter 50.000 € ist es eh egal…"
 
-WICHTIG:
-- Niemals plump oder albern
-- Immer witzig, clever und pointiert
-- Zielgruppe: Brautpaare im Premiumsegment
-- Jeder Text soll als Instagram Reel Overlay funktionieren
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 FORMAT 3: PROVOKANTE ÜBERTREIBUNG
+Bewusste maßlose Übertreibung einer realen Situation oder eines Wunsches, mit Augenzwinkern.  
+Mechaniken: Übertreibung, absichtlicher Kontrollverlust, Wunsch vs. Absurdität, Tabubruch.
 
-WICHTIG für das JSON-Format:
-- Verwende nur gerade Anführungszeichen (")
-- Keine Zeilenumbrüche im Text
-- Verwende \\n für Zeilenumbrüche
-- Escape alle Sonderzeichen korrekt
+REGELN:
+- Kernwahrheit + absurde Steigerung
+- Stark bildhafte Sprache, sofort verständlich
+- Tabubruch mit Stil
+- Nicht zu albern, sondern stilvoll maßlos
 
-Erstelle 6 verschiedene Texte mit unterschiedlichen Humor-Formaten.
+BEISPIELE:
+- Für diese Deko würde ich meine Schwiegermutter verkaufen.
+- Eine gute Hochzeit braucht: DJ, Saxophon, Stripper. Mindestens zwei davon.
+- Sind wir doch mal ehrlich: Für diese wunderschöne Hochzeitsdeko würde man doch seine Schwiegermutter verkaufen, oder?
+- Scheitert eure Traumhochzeit an der Umsetzung? → Bucht einen Hochzeitsplaner.\\nScheitert sie am Geld? → Startet einen OnlyFans-Account.
+- Bundestagswahl 2025: Soo viele junge Menschen haben Die Linke gewählt… Und ja, ich kann’s verstehen: Ich bin auch dafür, dass wir endlich die Reichen besteuern, damit die Armen sich endlich die Hochzeitslocation in Apulien für 124.000 € leisten können.
+- Volksentscheid 2026:\\nKostenlose Floristik für alle.\\nWeil 9.000 € für Eukalyptus nicht normal sind.
+- Für alle, die in Italien heiraten wollen und ernsthaft Pizza Hawai lieben: Bitte sagt mir vorher Bescheid. Als Hochzeitsplanerin muss ich dafür eine Sondergenehmigung von den italienischen Behörden einholen.
 
-FORMAT (genau so ausgeben):
-{"reelTexts":[{"id":1,"hook":"Kurzer Hook/Aufhänger","mainText":"Haupttext hier","cta":"Call-to-Action","emotion":"witzig"}]}`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 THEMEN
+- Deko-Fehlentscheidungen / Styling-Fauxpas  
+- Unrealistische Erwartungen von Brautpaaren  
+- Budget-Konflikte und Planungswahrheiten  
+- Kontraste zu 08/15-Hochzeiten  
+- Sarkasmus über Bräutigam-Reaktionen  
+- Selbstüberschätzung vs. Realität (DIY, Improvisation)  
+- Auseinandersetzung mit „alten Hasen“ in Locations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 FORMULIERUNGSREGELN
+- Nutze POV-Formulierungen, z. B.: "POV: Wenn der Bräutigam monatelang 'Mach du das' gesagt hat – und jetzt wow sagt."
+- Knappe, pointierte Sätze (oft nur ein Satz)
+- Ironische Kontraste nutzen („Old Money vs Boho“, „3k Deko vs 30k Deko“)
+- Kreative Fragen statt neutraler Aussagen
+- Bewusste Wortwahl mit konkreten Bildern: 
+  – „Flachbild-TV“ statt „Standard-Hotelzimmer“
+  – „Creme und Weiß gehören nicht zusammen“ statt „Diese Farben sind nicht harmonisch“
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 VERMEIDE (Negativ-Filter)
+- Keine Begriffe, die konstruiert wirken („Budget-Kompetenz“, „Pinterest-Trauma“, „Drama-Abo“)
+- Keine zu vagen Aussagen ohne klares Bild
+- Keine rein sachlichen Aufzählungen ohne Pointe
+- Keine erklärenden Zweitsätze
+- Kein Floristen-Bashing
+- Kein romantischer Kitsch, keine Phrasen wie „verzaubern“, „perfekte Fotos“ etc.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 QUALITÄTSKRITERIEN (muss alles erfüllt sein)
+- Überraschung / Bruch: 8–10/10
+- Verständlichkeit ohne Erklärung: 10/10
+- Zielgruppen-Realness (Premium-Brautpaare): Ja
+- Konkrete Bilder im Kopf: Ja
+- Sprache & Stil (elegant, clever, pointiert): 9–10/10
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 OUTPUT-FORMAT
+- Gib 6 Texte mit wechselnden Humorformaten aus
+- Verwende \\n für Zeilenumbrüche, keine echten Umbrüche
+- Keine Emojis
+- Keine Call-to-Actions
+- Nur gerade Anführungszeichen (")
+
+📦 FORMAT:
+{"reelTexts":[{"id":1,"format":"Listen-Stil","text":"Spruch hier","emotion":"witzig"}]}
+`;
+}
+
 
     } else if (style === 'realtalk') {
       promptContent = `Du erstellst authentische, ehrliche Instagram Reel Texte für Hochzeitsdienstleister im Premiumsegment.
