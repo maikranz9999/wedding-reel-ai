@@ -963,10 +963,10 @@
                     throw new Error(data.error || `HTTP ${response.status}: ${data.details || 'Unbekannter Fehler'}`);
                 }
 
-                sendConsume('generate_reel', { idem }, { reel_preview: JSON.stringify((data && data.reelTexts || []).slice(0,2)).slice(0,2000) }, 'tool'); // Code Lederhos COPY ROW
-
                 generatedTexts = data.reelTexts;
                 displayResults(data.reelTexts);
+
+                sendConsume('generate_reel', { idem }, { reel_preview: JSON.stringify((data && data.reelTexts || []).slice(0,2)).slice(0,2000) }, 'tool'); // Code Lederhos COPY ROW
 
             } catch (error) {
                 console.error('Generation Error Details:', error);
