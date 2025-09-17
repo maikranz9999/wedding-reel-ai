@@ -852,6 +852,12 @@
                 // Optional: Scroll innerhalb des Tools unterbinden, damit nur außen gescrollt wird
                 document.documentElement.style.overflow = 'hidden';
                 document.body.style.overflow = 'hidden';
+
+                function makeIdemKey(prefix='cl'){
+                  return (crypto?.randomUUID
+                    ? `${prefix}_${crypto.randomUUID()}`
+                    : `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+                }
         
                 
         // <!-- ========================================= -->
