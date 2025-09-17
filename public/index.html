@@ -853,11 +853,11 @@
                 document.documentElement.style.overflow = 'hidden';
                 document.body.style.overflow = 'hidden';
 
-                function makeIdemKey(prefix='cl'){
+                window.makeIdemKey = window.makeIdemKey || function(prefix='reel'){
                   return (crypto?.randomUUID
                     ? `${prefix}_${crypto.randomUUID()}`
                     : `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
-                }
+                }; // Code Lederhos COPY ROW
         
                 
         // <!-- ========================================= -->
