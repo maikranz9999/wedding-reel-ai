@@ -87,7 +87,7 @@ WICHTIG für das JSON-Format:
 Erstelle 6 verschiedene Texte mit unterschiedlichen Humor-Formaten.
 
 FORMAT (genau so ausgeben):
-{"reelTexts":[{"id":1,"hook":"Kurzer Hook/Aufhänger","mainText":"Haupttext hier","cta":"Call-to-Action","emotion":"witzig"}]}`;
+{"reelTexts":[{"id":1,"mainText":"Haupttext hier"}]}`;
 
     } else if (style === 'realtalk') {
       promptContent = `Du erstellst authentische, ehrliche Instagram Reel Texte für Hochzeitsdienstleister im Premiumsegment.
@@ -140,7 +140,7 @@ WICHTIG für das JSON-Format:
 - Escape alle Sonderzeichen korrekt
 
 FORMAT (genau so ausgeben):
-{"reelTexts":[{"id":1,"hook":"Realtalk-Opener","mainText":"Ehrlicher Haupttext","cta":"Call-to-Action","emotion":"authentisch"}]}`;
+{"reelTexts":[{"id":1,"mainText":"Haupttext hier"}]}`;
 
     } else if (style === 'inspiration') {
       promptContent = `Du erstellst inspirierende Instagram Reel Texte für Hochzeitsdienstleister im Premiumsegment.
@@ -225,7 +225,7 @@ WICHTIG für das JSON-Format:
 - Escape alle Sonderzeichen korrekt
 
 FORMAT (genau so ausgeben):
-{"reelTexts":[{"id":1,"hook":"Inspirierender Opener","mainText":"Inspirierender Haupttext","cta":"Call-to-Action","emotion":"inspirierend"}]}`;
+{"reelTexts":[{"id":1,"mainText":"Haupttext hier"}]}`;
     }
 
     const message = await anthropic.messages.create({
@@ -249,23 +249,27 @@ if (!jsonMatch) throw new Error('Kein gültiges JSON in der Antwort gefunden');
 // WICHTIG: NICHT mehr manuell replacen/escapen!
 const parsed = JSON.parse(jsonMatch[0]);
 
+// Nur mainText verwenden (robust, falls das Modell doch mehr Felder sendet)
+const reelTexts = Array.isArray(parsed.reelTexts)
+  ? parsed.reelTexts
+      .map((it, idx) => ({
+        id: Number(it?.id ?? idx + 1),
+        mainText: String(it?.mainText ?? '').trim()
+      }))
+      .filter(it => it.mainText.length > 0)
+  : [];
+
 return res.status(200).json({
   success: true,
-  reelTexts: parsed.reelTexts || []
+  reelTexts
 });
-
-
-    return res.status(200).json({
-      success: true,
-      reelTexts: parsed.reelTexts || []
-    });
-
-  } catch (error) {
-    console.error('Generation Error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      details: 'Fehler bei der Text-Generierung'
-    });
-  }
+} catch (error) {
+  console.error('Generation Error:', error);
+  return res.status(500).json({
+    success: false,
+    error: error.message,
+    details: 'Fehler bei der Text-Generierung'
+  });
 }
+}
+
