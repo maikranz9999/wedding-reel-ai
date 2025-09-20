@@ -237,27 +237,23 @@ FORMAT (genau so ausgeben):
       }]
     });
 
-    const response = message.content[0].text;
-    console.log('Raw AI Response:', response); // Debug
-    
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) {
-      throw new Error('Kein gültiges JSON in der Antwort gefunden');
-    }
-    
-    // JSON bereinigen
-    let jsonStr = jsonMatch[0]
-      .replace(/[\n\r\t]/g, ' ') // Zeilenumbrüche entfernen
-      .replace(/\\/g, '\\\\') // Backslashes escapen
-      .replace(/"/g, '\\"') // Anführungszeichen escapen
-      .replace(/\\"/g, '"') // Wieder rückgängig für JSON-Struktur
-      .replace(/"\s*:\s*"/g, '":"') // Leerzeichen um Doppelpunkte entfernen
-      .trim();
-    
-    console.log('Cleaned JSON:', jsonStr); // Debug
-    
-    const parsed = JSON.parse(jsonStr);
+    const response = message?.content?.[0]?.text ?? '';
+console.log('Raw AI Response:', response);
+
+// Codefences entfernen (falls Claude sie setzt) und nur das erste {...} nehmen
+const withoutFences = response.replace(/```json|```/g, '').trim();
+const jsonMatch = withoutFences.match(/\{[\s\S]*\}/);
+
+if (!jsonMatch) throw new Error('Kein gültiges JSON in der Antwort gefunden');
+
+// WICHTIG: NICHT mehr manuell replacen/escapen!
+const parsed = JSON.parse(jsonMatch[0]);
+
+return res.status(200).json({
+  success: true,
+  reelTexts: parsed.reelTexts || []
+});
+
 
     return res.status(200).json({
       success: true,
