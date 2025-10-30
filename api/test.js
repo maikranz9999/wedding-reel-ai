@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       apiKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
       apiKeyPreview: process.env.CLAUDE_API_KEY ? 
         process.env.CLAUDE_API_KEY.substring(0, 8) + '...' : 'MISSING',
-      model: process.env.CLAUDE_MODEL || 'claude-3-sonnet-20240229',
+      model: process.env.CLAUDE_MODEL || 'claude-3-sonnet',
       nodeEnv: process.env.NODE_ENV,
       timestamp: new Date().toISOString()
     };
