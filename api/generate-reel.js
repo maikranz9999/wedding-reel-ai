@@ -229,7 +229,7 @@ FORMAT (genau so ausgeben):
     }
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-7-sonnet-latest',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       messages: [{
         role: 'user',
