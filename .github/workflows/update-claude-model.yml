@@ -2,7 +2,7 @@ name: Auto-update Claude model
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # Jeden Montag 08:00 UTC
+    - cron: '0 8 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -20,16 +20,15 @@ jobs:
           RESPONSE=$(curl -sf https://n8n.maikranz-business.com/claude-model)
           NEW_MODEL=$(echo "$RESPONSE" | jq -r '.model')
           echo "new_model=$NEW_MODEL" >> $GITHUB_OUTPUT
-          echo "Blessed model: $NEW_MODEL"
 
       - name: Check current model
         id: current
         run: |
           CURRENT=$(grep '// CLAUDE_MODEL' api/generate-reel.js | grep -oP "(?<=model: ')[^']+")
           echo "current_model=$CURRENT" >> $GITHUB_OUTPUT
-          echo "Current model: $CURRENT"
 
       - name: Update if outdated
+        id: update
         if: steps.current.outputs.current_model != steps.fetch.outputs.new_model
         run: |
           NEW="${{ steps.fetch.outputs.new_model }}"
@@ -39,8 +38,13 @@ jobs:
           git add api/generate-reel.js
           git commit -m "chore: auto-update Claude model to $NEW"
           git push
-          echo "Updated to $NEW"
+          echo "updated=true" >> $GITHUB_OUTPUT
 
-      - name: Already up to date
-        if: steps.current.outputs.current_model == steps.fetch.outputs.new_model
-        run: echo "Model already up to date (${{ steps.current.outputs.current_model }}), nothing to do."
+      - name: Send report mail
+        run: |
+          UPDATED="${{ steps.update.outputs.updated }}"
+          CURRENT="${{ steps.current.outputs.current_model }}"
+          NEW="${{ steps.fetch.outputs.new_model }}"
+          curl -sf -X POST https://n8n.maikranz-business.com/webhook/claude-model-report \
+            -H "Content-Type: application/json" \
+            -d "{\"repo\":\"wedding-reel-ai\",\"updated\":${UPDATED:-false},\"current_model\":\"$CURRENT\",\"new_model\":\"$NEW\"}" || true
