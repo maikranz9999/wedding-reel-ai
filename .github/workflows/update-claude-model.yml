@@ -1,0 +1,46 @@
+name: Auto-update Claude model
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Jeden Montag 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch blessed model
+        id: fetch
+        run: |
+          RESPONSE=$(curl -sf https://n8n.maikranz-business.com/claude-model)
+          NEW_MODEL=$(echo "$RESPONSE" | jq -r '.model')
+          echo "new_model=$NEW_MODEL" >> $GITHUB_OUTPUT
+          echo "Blessed model: $NEW_MODEL"
+
+      - name: Check current model
+        id: current
+        run: |
+          CURRENT=$(grep '// CLAUDE_MODEL' api/generate-reel.js | grep -oP "(?<=model: ')[^']+")
+          echo "current_model=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current model: $CURRENT"
+
+      - name: Update if outdated
+        if: steps.current.outputs.current_model != steps.fetch.outputs.new_model
+        run: |
+          NEW="${{ steps.fetch.outputs.new_model }}"
+          sed -i "s|model: '.*', // CLAUDE_MODEL|model: '$NEW', // CLAUDE_MODEL|" api/generate-reel.js
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add api/generate-reel.js
+          git commit -m "chore: auto-update Claude model to $NEW"
+          git push
+          echo "Updated to $NEW"
+
+      - name: Already up to date
+        if: steps.current.outputs.current_model == steps.fetch.outputs.new_model
+        run: echo "Model already up to date (${{ steps.current.outputs.current_model }}), nothing to do."
